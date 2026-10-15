@@ -76,6 +76,29 @@ main { max-width: 1100px; margin: 0 auto; padding: 0 16px 40px; }
 .log div { padding: 4px 0; border-bottom: 1px dashed var(--line); }
 .good { color: var(--good); } .bad { color: var(--bad); } .gold { color: var(--gold); }
 .hint { background: #2b2350; border-radius: 14px; padding: 10px 12px; margin-top: 10px; font-size: 17px; }
+/* ---------- welcome */
+.welcome { max-width: 860px; margin: 6px auto 0; text-align: center; }
+.welcome h2 { font-size: 34px; margin: 4px 0 8px; }
+.welcome .lead { font-size: 19px; line-height: 1.5; max-width: 700px; margin: 0 auto 6px; }
+.flow { position: relative; margin: 10px auto 0; max-width: 760px; }
+.flow svg { width: 100%; height: auto; display: block; }
+.node { cursor: pointer; outline: none; }
+.node rect { fill: var(--panel2); stroke: var(--line); stroke-width: 3; transition: stroke .2s, fill .2s; }
+.node:hover rect, .node:focus rect, .node.on rect { stroke: var(--gold); fill: #26305a; }
+.node.seen rect { stroke: #5fe39a; }
+.node.on rect { stroke: var(--gold); }
+@keyframes glow { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+.node .dot { animation: glow 1.6s ease-in-out infinite; }
+.node.seen .dot { display: none; }
+.bubble { position: relative; margin: 14px 4px 4px; min-height: 92px; background: #fff8dc; color: #1b2140; border-radius: 16px;
+          padding: 12px 34px 12px 14px; font-size: 17px; line-height: 1.4; text-align: left; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+.bubble.idle { background: var(--panel2); color: var(--dim); box-shadow: none; text-align: center; }
+.bubble.idle::before { display: none; }
+.bubble b { font-size: 19px; }
+.bubble .x { position: absolute; top: 4px; right: 8px; background: none; color: #1b2140; font-size: 20px; padding: 2px 6px; }
+.bubble::before { content: ""; position: absolute; top: -10px; left: var(--tip, 50%); border: 10px solid transparent; border-top: 0; border-bottom-color: #fff8dc; transform: translateX(-50%); }
+@media (max-width: 520px) { .flow { padding: 8px 4px; } .welcome h2 { font-size: 28px; } }
+.turnhow { background: var(--panel2); border-radius: 14px; padding: 10px 14px; margin: 14px auto 0; max-width: 700px; font-size: 17px; text-align: left; }
 /* ---------- overlay */
 #over { position: fixed; inset: 0; background: rgba(5, 8, 20, .82); display: flex; align-items: center; justify-content: center; z-index: 10; }
 #over .card { max-width: 520px; text-align: center; padding: 28px; }
@@ -94,12 +117,28 @@ main { max-width: 1100px; margin: 0 auto; padding: 0 16px 40px; }
 <header><h1>🌙 Moon Base <span>Academy</span></h1><div class="total" id="total"></div></header>
 <main>
   <section id="home">
-    <div class="intro"><p>Build a base on the Moon, dig up ice, make water and sell it to the rockets from Earth.<br><span class="dim">Nine missions. Each one teaches something new. Finish one to unlock the next!</span></p></div>
+    <div class="intro"><p>Build a base on the Moon, dig up ice, make water and sell it to the rockets from Earth.<br><span class="dim">Start with the Welcome, then nine missions. Each one teaches something new. Finish one to unlock the next!</span></p></div>
     <div id="path"></div>
+  </section>
+  <section id="welcome" class="hidden">
+    <div class="welcome">
+      <h2>Welcome to the Moon! 🌙</h2>
+      <p class="lead">You are here to dig up the Moon, find ice, turn it into water, and make your fortune!</p>
+      <p class="lead dim">Water is very important on the Moon. Everyone who comes after you will need it to drink, to grow
+        food and to make rocket fuel. Moon Base Academy shows you how to get ice in this cold, dark and dusty place.</p>
+      <div class="card flow" id="flow"></div>
+      <p class="dim" id="flow-count" style="margin:8px 0 0">Tap each picture to find out what it does.</p>
+      <div class="turnhow">🎮 <b>How to play:</b> the game goes in turns. Each turn you make a plan: how much to dig, melt,
+        sell and buy. Then press <b>End turn ▶</b> and see what happens!</div>
+      <div class="row" style="justify-content:center;margin:16px 0 30px">
+        <button class="btn ghost" id="w-back">◀ Missions</button>
+        <button class="btn big" id="w-go">Let's go! ▶</button>
+      </div>
+    </div>
   </section>
   <section id="play" class="hidden">
     <div class="row spread" style="margin-bottom:10px">
-      <button class="btn ghost" id="b-home">◀ Missions</button>
+      <span class="row"><button class="btn ghost" id="b-home">◀ Missions</button><button class="btn ghost" id="b-how">❓ How it works</button></span>
       <div class="dim" id="turnlbl"></div>
     </div>
     <div id="game">
@@ -188,28 +227,122 @@ const starStr = n => [0, 1, 2].map(i => `<span class="${i < n ? "" : "off"}">⭐
 const short = name => name.replace(/^SP-/, "");
 
 // ---------- the mission path: two rows, the second running back
+const starTotal = () => LEVELS.reduce((a, L) => a + (PROG[L.n] || 0), 0);   // the Welcome (PROG[0]) has no stars
+const welcomed = () => !!(PROG[0] || PROG[1]);                             // players from before the Welcome count as welcomed
 function renderHome() {
-  const total = Object.values(PROG).reduce((a, b) => a + b, 0);
-  $("total").textContent = `⭐ ${total} / ${LEVELS.length * 3}`;
-  const W = 1000, per = 5, H = LEVELS.length > per ? 600 : 330;
-  const pts = LEVELS.map((L, i) => {
+  $("total").textContent = `⭐ ${starTotal()} / ${LEVELS.length * 3}`;
+  const STOPS = [{n: 0, title: "Welcome!"}, ...LEVELS];
+  const W = 1000, per = 5, H = STOPS.length > per ? 600 : 330;
+  const pts = STOPS.map((L, i) => {
     const row = Math.floor(i / per), k = i % per, x = 130 + k * (W - 260) / (per - 1);
     return [row % 2 ? W - x : x, row * 270 + (k % 2 ? 200 : 110)];
   });
   let s = `<svg viewBox="0 0 ${W} ${H}"><defs><radialGradient id="mg" cx=".4" cy=".35"><stop offset="0" stop-color="#d9dbe6"/><stop offset="1" stop-color="#8b8fa3"/></radialGradient></defs>`;
   for (let i = 0; i < 90; i++) s += `<circle cx="${(i * 137) % W}" cy="${(i * 71) % H}" r="${i % 3 ? 1 : 1.6}" fill="#fff" opacity=".5"/>`;
   s += `<path d="M ${pts.map(p => p.join(" ")).join(" L ")}" stroke="#55609a" stroke-width="6" stroke-dasharray="4 14" stroke-linecap="round" fill="none"/>`;
-  LEVELS.forEach((L, i) => {
-    const [x, y] = pts[i], open = i === 0 || (PROG[i] || 0) > 0, st = PROG[L.n] || 0;
+  STOPS.forEach((L, i) => {
+    const [x, y] = pts[i], st = PROG[L.n] || 0;
+    const open = L.n === 0 || (L.n === 1 ? welcomed() : (PROG[L.n - 1] || 0) > 0);
+    const done = L.n === 0 ? welcomed() : st > 0;
+    const face = L.n === 0 ? "👋" : open ? L.n : "🔒";
+    const under = L.n === 0 ? (done ? "✅" : "start here") : [0, 1, 2].map(k => k < st ? "⭐" : "☆").join("");
     s += `<g class="lvl ${open ? "" : "locked"}" data-n="${L.n}" transform="translate(${x},${y})">
-      <circle r="52" fill="url(#mg)" stroke="${st ? "#ffcc4d" : "#3b5bfd"}" stroke-width="6"/>
+      <circle r="52" fill="url(#mg)" stroke="${done ? "#ffcc4d" : "#3b5bfd"}" stroke-width="6"/>
       <circle cx="-18" cy="-14" r="9" fill="#9a9db0"/><circle cx="16" cy="12" r="6" fill="#9a9db0"/>
-      <text text-anchor="middle" y="14" font-size="40" font-weight="800" fill="#1b2140">${open ? L.n : "🔒"}</text>
+      <text text-anchor="middle" y="14" font-size="40" font-weight="800" fill="#1b2140">${face}</text>
       <text text-anchor="middle" y="82" font-size="20" font-weight="700" fill="#f2f4ff">${esc(L.title)}</text>
-      <text text-anchor="middle" y="108" font-size="22">${[0, 1, 2].map(k => k < st ? "⭐" : "☆").join("")}</text></g>`;
+      <text text-anchor="middle" y="108" font-size="${L.n === 0 && !done ? 17 : 22}" fill="#ffcc4d">${under}</text></g>`;
   });
   $("path").innerHTML = s + "</svg>";
-  document.querySelectorAll(".lvl").forEach(g => g.onclick = () => { if (!g.classList.contains("locked")) start(+g.dataset.n); });
+  document.querySelectorAll(".lvl").forEach(g => g.onclick = () => {
+    if (g.classList.contains("locked")) return;
+    if (+g.dataset.n === 0) welcome("home"); else start(+g.dataset.n);
+  });
+}
+
+// ---------- the Welcome: what the game is about, as a picture to tap
+const FLOW = [   // id, emoji, label, x, y (centre, in the picture's units), the pop-up text
+  ["claim", "🚩", "Claim", 70, 80, "<b>🚩 Claim</b><br>A claim is your own piece of the Moon. Only you can dig there. Moon soil is called <b>regolith</b> (say: REG-oh-lith). It has a little ice mixed in, and some claims have more ice than others."],
+  ["power", "☀️", "Power", 200, 80, "<b>☀️ Power</b><br>Solar panels turn sunlight into electricity. Every machine needs power to work. No power, no digging!"],
+  ["drill", "⛏️", "Drill", 330, 80, "<b>⛏️ Drill</b><br>Drills dig up Moon soil. Each drill digs one load of soil every turn, and each load uses one power."],
+  ["ice", "🧊", "Ice", 480, 80, "<b>🧊 Ice</b><br>About a quarter of the soil you dig is ice: frozen water. You can sell it, or melt it into water."],
+  ["credits", "🪙", "Credits", 640, 80, "<b>🪙 Credits</b><br>Credits are Moon money. A lander from Earth buys your ice and water and pays you in credits."],
+  ["melter", "🔥", "Melter", 480, 220, "<b>🔥 Melter</b><br>A melter warms ice until it turns into water. Melting uses power too, and a little water floats away as steam."],
+  ["water", "💧", "Water", 640, 220, "<b>💧 Water</b><br>Water is worth more than ice! People on the Moon need it to drink, to grow food and to make rocket fuel."],
+  ["grow", "🛒", "Grow", 265, 290, "<b>🛒 Grow your base</b><br>Spend your credits on more solar panels, drills and melters. A bigger base digs more and earns more!"],
+];
+let SEEN = new Set(), WFROM = "home";
+function welcome(from) {
+  WFROM = from;
+  ["home", "play"].forEach(id => $(id).classList.add("hidden"));
+  $("over").classList.add("hidden");
+  $("welcome").classList.remove("hidden");
+  $("w-go").textContent = from === "play" ? "Back to my mission ▶" : "Let's go! ▶";
+  $("w-back").classList.toggle("hidden", from === "play");
+  renderFlow();
+  document.documentElement.scrollTop = 0;
+}
+function renderFlow() {
+  const W = 720, H = 350, bw = 104, bh = 90;
+  const box = id => FLOW.find(f => f[0] === id);
+  const arrow = (x1, y1, x2, y2, extra = "") => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#8b93c7" stroke-width="5" marker-end="url(#ah)" ${extra}/>`;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="How a Moon base works: claim, power and drill make ice; ice sells for credits or melts into water, which sells for more credits; credits buy more machines.">
+    <defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#8b93c7"/></marker></defs>`;
+  s += `<text x="${(70 + 200) / 2}" y="90" text-anchor="middle" font-size="34" font-weight="800" fill="#8b93c7">+</text>`;
+  s += `<text x="${(200 + 330) / 2}" y="90" text-anchor="middle" font-size="34" font-weight="800" fill="#8b93c7">+</text>`;
+  s += arrow(330 + bw / 2 + 4, 80, 480 - bw / 2 - 8, 80);                     // drill -> ice
+  s += arrow(480 + bw / 2 + 4, 80, 640 - bw / 2 - 8, 80);                     // ice -> credits
+  s += arrow(480, 80 + bh / 2 + 4, 480, 220 - bh / 2 - 8);                    // ice -> melter
+  s += arrow(480 + bw / 2 + 4, 220, 640 - bw / 2 - 8, 220);                   // melter -> water
+  s += arrow(640, 220 - bh / 2 - 4, 640, 80 + bh / 2 + 8);                    // water -> credits
+  s += `<path d="M ${640 + bw / 2 + 2} 80 C 712 80, 712 300, 640 300 L ${265 + bw / 2 + 10} 300" stroke="#ffcc4d" stroke-width="4" stroke-dasharray="8 8" fill="none" marker-end="url(#ah)"/>`;
+  s += `<path d="M ${265 - bw / 2 - 2} 290 C 150 290, 140 200, 200 ${80 + bh / 2 + 10}" stroke="#ffcc4d" stroke-width="4" stroke-dasharray="8 8" fill="none" marker-end="url(#ah)"/>`;
+  s += `<text x="460" y="330" text-anchor="middle" font-size="16" fill="#ffcc4d">more credits buy more machines</text>`;
+  for (const [id, emoji, label, x, y] of FLOW) {
+    s += `<g class="node ${SEEN.has(id) ? "seen" : ""}" data-f="${id}" tabindex="0" role="button" aria-label="${label}: tell me more">
+      <rect x="${x - bw / 2}" y="${y - bh / 2}" width="${bw}" height="${bh}" rx="18"/>
+      <text x="${x}" y="${y + 4}" text-anchor="middle" font-size="36">${emoji}</text>
+      <text x="${x}" y="${y + 34}" text-anchor="middle" font-size="17" font-weight="700" fill="#f2f4ff">${label}</text>
+      <circle class="dot" cx="${x + bw / 2 - 10}" cy="${y - bh / 2 + 10}" r="7" fill="#ffcc4d"/></g>`;
+  }
+  $("flow").innerHTML = s + `</svg><div class="bubble idle" id="bubble" role="status" aria-live="polite">👆 Tap a picture to find out what it does.</div>`;
+  document.querySelectorAll(".node").forEach(n => {
+    n.onclick = e => { e.stopPropagation(); showFlow(n.dataset.f); };
+    n.onmouseenter = () => showFlow(n.dataset.f);
+    n.onfocus = () => showFlow(n.dataset.f);
+    n.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showFlow(n.dataset.f); } };
+  });
+  countFlow();
+}
+function showFlow(id) {
+  const f = FLOW.find(x => x[0] === id), wrap = $("flow"), b = $("bubble"), n = wrap.querySelector(`[data-f="${id}"]`);
+  SEEN.add(id);
+  wrap.querySelectorAll(".node").forEach(x => x.classList.toggle("on", x === n));
+  n.classList.add("seen");
+  b.innerHTML = `<button class="x" aria-label="close">✕</button>${f[5]}`;
+  b.classList.remove("idle");
+  const br = b.getBoundingClientRect(), nr = n.getBoundingClientRect();       // the bubble sits under the picture; its tip points at the item
+  b.style.setProperty("--tip", Math.max(18, Math.min(br.width - 18, nr.left + nr.width / 2 - br.left)) + "px");
+  b.querySelector(".x").onclick = e => { e.stopPropagation(); idleBubble(); };
+  countFlow();
+}
+function idleBubble() {
+  const b = $("bubble");
+  if (!b) return;
+  b.classList.add("idle");
+  b.textContent = "👆 Tap a picture to find out what it does.";
+  $("flow").querySelectorAll(".node").forEach(x => x.classList.remove("on"));
+}
+function countFlow() {
+  const n = SEEN.size;
+  $("flow-count").textContent = n >= FLOW.length ? "🎉 You found out about everything! Press Let's go to start digging." :
+    n ? `You found out about ${n} of ${FLOW.length}. Keep tapping!` : "Tap each picture to find out what it does.";
+}
+function welcomeDone() {
+  if (!PROG[0]) { PROG[0] = 1; save(PROG); }
+  $("welcome").classList.add("hidden");
+  if (WFROM === "play") { $("play").classList.remove("hidden"); return; }
+  start(1);
 }
 
 // ---------- a level
@@ -439,7 +572,7 @@ function finish() {
   const g = G, c = $("over-card");
   if (g.done) {
     if ((PROG[g.level] || 0) < g.stars) { PROG[g.level] = g.stars; save(PROG); }
-    $("total").textContent = `⭐ ${Object.values(PROG).reduce((a, b) => a + b, 0)} / ${LEVELS.length * 3}`;
+    $("total").textContent = `⭐ ${starTotal()} / ${LEVELS.length * 3}`;
     const next = LEVELS.find(L => L.n === g.level + 1);
     c.innerHTML = `<h2>Mission complete! 🎉</h2><div class="stars">${starStr(g.stars)}</div>
       <p>${esc(g.goal.text)} in ${g.turn} turn${g.turn === 1 ? "" : "s"}.${g.stars < 3 ? `<br><span class="dim">${g.star_rule === "no_jams" && g.jams ? "No jams for three stars!" : `Finish by turn ${g.stars_at[0]} for three stars.`}</span>` : ""}</p>
@@ -459,9 +592,13 @@ function finish() {
   if ($("o-next")) $("o-next").onclick = () => start(g.level + 1);
   if ($("o-home")) $("o-home").onclick = home;
 }
-function home() { $("over").classList.add("hidden"); $("play").classList.add("hidden"); $("home").classList.remove("hidden"); renderHome(); }
+function home() { ["over", "play", "welcome"].forEach(id => $(id).classList.add("hidden")); $("home").classList.remove("hidden"); renderHome(); }
 $("b-end").onclick = endTurn;
 $("b-home").onclick = home;
+$("b-how").onclick = () => welcome("play");
+$("w-go").onclick = welcomeDone;
+$("w-back").onclick = home;
+document.addEventListener("click", e => { if (!e.target.closest(".flow")) idleBubble(); });   // a tap elsewhere closes the pop-up
 $("b-hint").onclick = () => { const h = $("hint"); h.textContent = "💡 " + G.hint; h.classList.toggle("hidden"); };
 (async () => {
   try { LEVELS = (await api("/api/levels")).levels; renderHome(); } catch (e) { oops(e.message); }
