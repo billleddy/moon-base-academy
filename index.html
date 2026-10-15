@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moon Base Academy</title>
+<style>
+:root {
+  --bg: #0b1020; --panel: #151c33; --panel2: #1c2541; --line: #2c3763; --ink: #f2f4ff; --dim: #a8b0d6;
+  --gold: #ffcc4d; --ice: #8fd3ff; --water: #4da3ff; --power: #ffd84d; --drill: #ff9a5c; --melt: #ff6b8b;
+  --good: #5fe39a; --bad: #ff7a7a; --btn: #3b5bfd; --btn2: #2a3a7a;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(ellipse at top, #1a2350 0%, var(--bg) 60%); background-color: var(--bg); color: var(--ink);
+       font-family: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 18px; min-height: 100vh; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; }
+header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
+header h1 { margin: 0; font-size: 26px; letter-spacing: .5px; }
+header h1 span { color: var(--gold); }
+.total { font-size: 20px; color: var(--gold); }
+.hidden { display: none !important; }
+main { max-width: 1100px; margin: 0 auto; padding: 0 16px 40px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; }
+.btn { background: var(--btn); border-radius: 14px; padding: 12px 20px; font-weight: 700; }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.big { font-size: 24px; padding: 16px 30px; border-radius: 18px; box-shadow: 0 4px 0 #22379e; }
+.btn.ghost { background: var(--btn2); }
+.dim { color: var(--dim); }
+/* ---------- level path */
+#path { position: relative; margin-top: 10px; }
+#path svg { width: 100%; height: auto; display: block; }
+.lvl { cursor: pointer; }
+.lvl.locked { cursor: default; opacity: .45; }
+.intro { text-align: center; margin: 10px auto 0; max-width: 680px; }
+/* ---------- level screen */
+#game { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; margin-top: 6px; }
+@media (max-width: 860px) { #game { grid-template-columns: 1fr; } }
+.mission { display: flex; gap: 14px; align-items: flex-start; }
+.face { font-size: 44px; line-height: 1; }
+.mission h2 { margin: 0 0 4px; font-size: 24px; }
+.goalbar { height: 18px; background: var(--panel2); border-radius: 10px; overflow: hidden; margin: 8px 0 4px; }
+.goalbar i { display: block; height: 100%; background: linear-gradient(90deg, #5fe39a, #ffcc4d); border-radius: 10px; transition: width .5s; }
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+.store { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; margin-top: 12px; }
+.store div { background: var(--panel2); border-radius: 14px; padding: 10px; text-align: center; }
+.store b { display: block; font-size: 28px; }
+.scene { margin-top: 12px; border-radius: 16px; overflow: hidden; background: #070a16; }
+.scene svg { display: block; width: 100%; height: auto; }
+.bar { height: 14px; background: var(--panel2); border-radius: 8px; overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 8px; transition: width .3s; }
+.plan h3 { margin: 4px 0 10px; font-size: 22px; }
+.act { background: var(--panel2); border-radius: 14px; padding: 10px 12px; margin-bottom: 10px; }
+.act .row { justify-content: space-between; }
+.step { display: inline-flex; align-items: center; gap: 6px; }
+.step button { width: 40px; height: 40px; border-radius: 12px; background: var(--btn2); font-size: 22px; font-weight: 700; }
+.step b { min-width: 52px; text-align: center; font-size: 22px; }
+.toggle { border-radius: 12px; padding: 10px 14px; background: var(--btn2); font-weight: 700; }
+.toggle.on { background: var(--good); color: #062; }
+.shop { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.shop .item { background: var(--btn2); border-radius: 12px; padding: 10px 6px; text-align: center; line-height: 1.25; }
+.shop .item.has { outline: 3px solid var(--gold); }
+.shop .step { margin-top: 8px; justify-content: center; }
+.shop .step button { background: var(--btn); }
+.shop .step b { min-width: 34px; }
+.problems { color: var(--bad); font-size: 16px; margin: 6px 0; }
+.mapsvg { width: 100%; height: auto; display: block; }
+.parcel { cursor: pointer; }
+.parcel rect { stroke: #0b1020; stroke-width: .25; }
+.parcel.sel rect { stroke: #fff; stroke-width: .6; }
+.pick { background: var(--panel2); border-radius: 14px; padding: 10px 12px; margin-top: 10px; font-size: 17px; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 14px; color: var(--dim); margin-top: 6px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+.note { font-size: 16px; color: var(--dim); }
+.log { font-size: 16px; }
+.log div { padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.good { color: var(--good); } .bad { color: var(--bad); } .gold { color: var(--gold); }
+.hint { background: #2b2350; border-radius: 14px; padding: 10px 12px; margin-top: 10px; font-size: 17px; }
+/* ---------- overlay */
+#over { position: fixed; inset: 0; background: rgba(5, 8, 20, .82); display: flex; align-items: center; justify-content: center; z-index: 10; }
+#over .card { max-width: 520px; text-align: center; padding: 28px; }
+#over h2 { font-size: 34px; margin: 0 0 6px; }
+.stars { font-size: 52px; letter-spacing: 6px; margin: 10px 0; }
+.stars .off { filter: grayscale(1); opacity: .3; }
+@keyframes pop { 0% { transform: scale(.3); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+.stars span { display: inline-block; animation: pop .5s both; }
+.stars span:nth-child(2) { animation-delay: .25s; } .stars span:nth-child(3) { animation-delay: .5s; }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.gain { animation: float 1.2s ease-in-out 2; display: inline-block; }
+#err { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--bad); color: #300; padding: 10px 16px; border-radius: 12px; font-weight: 700; }
+</style>
+</head>
+<body>
+<header><h1>🌙 Moon Base <span>Academy</span></h1><div class="total" id="total"></div></header>
+<main>
+  <section id="home">
+    <div class="intro"><p>Build a base on the Moon, dig up ice, make water and sell it to the rockets from Earth.<br><span class="dim">Nine missions. Each one teaches something new. Finish one to unlock the next!</span></p></div>
+    <div id="path"></div>
+  </section>
+  <section id="play" class="hidden">
+    <div class="row spread" style="margin-bottom:10px">
+      <button class="btn ghost" id="b-home">◀ Missions</button>
+      <div class="dim" id="turnlbl"></div>
+    </div>
+    <div id="game">
+      <div>
+        <div class="card mission">
+          <div class="face">👩‍🚀</div>
+          <div style="flex:1">
+            <h2 id="m-title"></h2>
+            <div id="m-story"></div>
+            <div style="margin-top:10px"><b>Goal:</b> <span id="m-goal"></span></div>
+            <div class="goalbar"><i id="m-bar"></i></div>
+            <div class="row spread note"><span id="m-prog"></span><span id="m-stars"></span></div>
+          </div>
+        </div>
+        <div class="store">
+          <div>🪙<b id="s-cash">0</b><span class="dim">credits</span></div>
+          <div>🧊<b id="s-ice">0</b><span class="dim">ice</span></div>
+          <div>💧<b id="s-water">0</b><span class="dim">water</span></div>
+          <div class="fuelbox hidden">🔵<b id="s-lh2">0</b><span class="dim">hydrogen</span></div>
+          <div class="fuelbox hidden">🟢<b id="s-lox">0</b><span class="dim">oxygen</span></div>
+        </div>
+        <div class="card hidden" id="mapcard" style="margin-top:12px">
+          <div class="row spread"><h3 style="margin:0">🗺️ Map</h3><span class="note" id="map-note"></span></div>
+          <div id="map"></div>
+          <div class="legend"><span><i style="background:#ffcc4d"></i>yours</span><span><i style="background:#ff7a7a"></i>a rival's</span>
+            <span><i style="background:#b07cff"></i>auction</span><span><i style="background:#3b5bfd"></i>free</span></div>
+          <div class="pick" id="pick"></div>
+        </div>
+        <div class="card hidden" id="mktcard" style="margin-top:12px"></div>
+        <div class="scene card" style="padding:0" id="scene"></div>
+        <div class="card" style="margin-top:12px">
+          <h3 style="margin:0 0 6px">What happened</h3>
+          <div class="log" id="log"></div>
+        </div>
+      </div>
+      <div>
+        <div class="card plan">
+          <h3>Your plan for this turn</h3>
+          <div id="acts"></div>
+          <div class="act">
+            <div class="row spread"><span>⚡ Power used</span><span id="p-power"></span></div>
+            <div class="bar" style="margin-top:6px"><i id="p-bar" style="background:var(--power)"></i></div>
+          </div>
+          <div class="problems" id="problems"></div>
+          <div class="note" id="expect"></div>
+          <div class="row spread" style="margin-top:12px">
+            <button class="btn ghost" id="b-hint">💡 Hint</button>
+            <button class="btn big" id="b-end">End turn ▶</button>
+          </div>
+          <div class="hint hidden" id="hint"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="over" class="hidden"><div class="card" id="over-card"></div></div>
+<div id="err" class="hidden"></div>
+<script src="engine.js"></script>
+<script src="academy_local.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+let LEVELS = [], G = null, TOKEN = null, PLAN = null, PREV = null, SEL = null, busy = false;
+const GOODS = {ICE: "🧊 ice", WATER: "💧 water", LH2: "🔵 hydrogen", LOX: "🟢 oxygen"};
+const ICON = {ICE: "🧊", WATER: "💧", LH2: "🔵", LOX: "🟢"};
+const MACHINE = {power: "☀️ solar panel", rig: "⛏️ drill", plant: "🔥 melter", fuel: "🧪 fuel maker"};
+// progress: best stars per level, kept in this browser (private windows may forget it)
+const load = () => { try { return JSON.parse(localStorage.getItem("ld.academy") || "{}"); } catch (e) { return {}; } };
+const save = p => { try { localStorage.setItem("ld.academy", JSON.stringify(p)); } catch (e) { /* not kept */ } };
+let PROG = load();
+
+let LOCAL = null;   // the static build (ui/academy_web/) runs the game in the page: no server
+async function api(path, body) {
+  if (window.LocalAcademy) {
+    if (!LOCAL) LOCAL = await window.LocalAcademy.boot("");
+    return JSON.parse(JSON.stringify(LOCAL.call(path, body)));   // a copy, like a server's reply
+  }
+  const r = await fetch(path, body === undefined ? {} : {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+function oops(m) { const e = $("err"); e.textContent = m; e.classList.remove("hidden"); setTimeout(() => e.classList.add("hidden"), 3500); }
+const starStr = n => [0, 1, 2].map(i => `<span class="${i < n ? "" : "off"}">⭐</span>`).join("");
+const short = name => name.replace(/^SP-/, "");
+
+// ---------- the mission path: two rows, the second running back
+function renderHome() {
+  const total = Object.values(PROG).reduce((a, b) => a + b, 0);
+  $("total").textContent = `⭐ ${total} / ${LEVELS.length * 3}`;
+  const W = 1000, per = 5, H = LEVELS.length > per ? 600 : 330;
+  const pts = LEVELS.map((L, i) => {
+    const row = Math.floor(i / per), k = i % per, x = 130 + k * (W - 260) / (per - 1);
+    return [row % 2 ? W - x : x, row * 270 + (k % 2 ? 200 : 110)];
+  });
+  let s = `<svg viewBox="0 0 ${W} ${H}"><defs><radialGradient id="mg" cx=".4" cy=".35"><stop offset="0" stop-color="#d9dbe6"/><stop offset="1" stop-color="#8b8fa3"/></radialGradient></defs>`;
+  for (let i = 0; i < 90; i++) s += `<circle cx="${(i * 137) % W}" cy="${(i * 71) % H}" r="${i % 3 ? 1 : 1.6}" fill="#fff" opacity=".5"/>`;
+  s += `<path d="M ${pts.map(p => p.join(" ")).join(" L ")}" stroke="#55609a" stroke-width="6" stroke-dasharray="4 14" stroke-linecap="round" fill="none"/>`;
+  LEVELS.forEach((L, i) => {
+    const [x, y] = pts[i], open = i === 0 || (PROG[i] || 0) > 0, st = PROG[L.n] || 0;
+    s += `<g class="lvl ${open ? "" : "locked"}" data-n="${L.n}" transform="translate(${x},${y})">
+      <circle r="52" fill="url(#mg)" stroke="${st ? "#ffcc4d" : "#3b5bfd"}" stroke-width="6"/>
+      <circle cx="-18" cy="-14" r="9" fill="#9a9db0"/><circle cx="16" cy="12" r="6" fill="#9a9db0"/>
+      <text text-anchor="middle" y="14" font-size="40" font-weight="800" fill="#1b2140">${open ? L.n : "🔒"}</text>
+      <text text-anchor="middle" y="82" font-size="20" font-weight="700" fill="#f2f4ff">${esc(L.title)}</text>
+      <text text-anchor="middle" y="108" font-size="22">${[0, 1, 2].map(k => k < st ? "⭐" : "☆").join("")}</text></g>`;
+  });
+  $("path").innerHTML = s + "</svg>";
+  document.querySelectorAll(".lvl").forEach(g => g.onclick = () => { if (!g.classList.contains("locked")) start(+g.dataset.n); });
+}
+
+// ---------- a level
+const emptyPlan = () => ({dig: 0, melt: 0, fuel: 0, sell: [], buy: {}, scan: [], bid: {}});
+async function start(n) {
+  try {
+    const r = await api("/api/start", {level: n});
+    TOKEN = r.token; G = r.state; PLAN = emptyPlan(); SEL = null;   // the first plan is the player's to make
+    $("home").classList.add("hidden"); $("play").classList.remove("hidden"); $("hint").classList.add("hidden");
+    $("over").classList.add("hidden");
+    renderGame(); await preview();
+    document.documentElement.scrollTop = 0;
+  } catch (e) { oops(e.message); }
+}
+function nextPlan(last) {   // after a turn: keep the player's choices (the server trims them to what is possible); purchases, scans and bids are one-off
+  return {dig: typeof last.dig === "object" ? {...last.dig} : last.dig, melt: last.melt, fuel: last.fuel || 0, sell: last.sell.slice(), buy: {}, scan: [], bid: {}};
+}
+function renderGame() {
+  const g = G;
+  $("m-title").textContent = `Mission ${g.level}: ${g.title}`;
+  $("m-story").textContent = g.story;
+  $("m-goal").textContent = g.goal.text;
+  $("m-bar").style.width = (100 * g.goal.now / g.goal.target) + "%";
+  $("m-prog").textContent = `${g.goal.now.toLocaleString()} of ${g.goal.target.toLocaleString()}`;
+  $("m-stars").innerHTML = `⭐⭐⭐ by turn ${g.stars_at[0]} · ⭐⭐ by turn ${g.stars_at[1]}${g.star_rule === "no_jams" ? " · ⭐⭐⭐ only with no jams" : ""}`;
+  $("turnlbl").textContent = g.done || g.failed ? `${g.turn} turns played` : `Turn ${g.turn + 1} of ${g.turns}`;
+  $("s-cash").textContent = g.cash.toLocaleString(); $("s-ice").textContent = g.ice; $("s-water").textContent = g.water;
+  document.querySelectorAll(".fuelbox").forEach(x => x.classList.toggle("hidden", g.lh2 === undefined));
+  if (g.lh2 !== undefined) { $("s-lh2").textContent = g.lh2; $("s-lox").textContent = g.lox; }
+  $("scene").innerHTML = scene(g);
+  renderMap(g); renderMarket(g);
+  const L = g.log.slice().reverse();
+  $("log").innerHTML = L.length ? L.slice(0, 6).map(t => `<div><b>Turn ${t.turn}:</b> ${story(t)}</div>`).join("") : `<div class="dim">Nothing yet. Make a plan and press End turn.</div>`;
+}
+function story(t) {
+  const out = [];
+  for (const c of t.claims || []) out.push(c.startsWith("won") ? `<span class="gain good">🎉 You ${esc(c)}!</span>` : `<span class="bad">😕 You ${esc(c)}.</span>`);
+  if (t.jam) out.push(`<span class="bad">💥 The drills jammed! Nothing was dug and repairs cost ${t.repair} credits.</span>`);
+  else if (t.dug) out.push(`⛏️ Dug ${t.dug} loads → <span class="gain good">+${t.got.ICE} 🧊</span>`);
+  if (t.got.WATER) out.push(`🔥 Melted ice → <span class="gain good">+${t.got.WATER} 💧</span>`);
+  if (t.fuel) out.push(`🧪 Started ${t.fuel} fuel job${t.fuel > 1 ? "s" : ""}`);
+  if (t.fuel_ready) out.push(`<span class="gain good">+${t.fuel_ready} 🔵 +${t.fuel_ready} 🟢 fuel ready</span>`);
+  const sold = Object.entries(t.sold).filter(([, n]) => n).map(([k, n]) => `${n} ${ICON[k]}`);
+  if (sold.length) out.push(`${t.rocket && (t.sold.LH2 || t.sold.LOX) ? "🚀" : "🛬"} Sold ${sold.join(" + ")} → <span class="gold">+${t.earned} 🪙</span>`);
+  for (const [k, n] of Object.entries(t.bought || {})) out.push(`🛒 Bought ${n} ${MACHINE[k]}${n > 1 ? "s" : ""}`);
+  if ((t.scanned || []).length) out.push(`🔍 Scanned ${t.scanned.map(short).join(", ")}`);
+  for (const [k, v] of Object.entries(t.bid || {})) out.push(`🏷️ Bid ${v} 🪙 on ${short(k)}`);
+  if (t.upkeep) out.push(`<span class="dim">🔧 upkeep ${t.upkeep} 🪙</span>`);
+  if (!t.jam && !t.dug && t.down) out.push(`<span class="bad">🔧 The drills were resting.</span>`);
+  return out.join(" · ") || "<span class='dim'>A quiet turn.</span>";
+}
+function scene(g) {   // the base: one icon per 10 units of each machine, the ice field, the lander
+  const m = g.machines, W = 600, H = 220;
+  let s = `<svg viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="#070a16"/>`;
+  for (let i = 0; i < 40; i++) s += `<circle cx="${(i * 97) % W}" cy="${(i * 53) % 110}" r="1" fill="#fff" opacity=".6"/>`;
+  s += `<circle cx="540" cy="40" r="22" fill="#4da3ff" opacity=".85"/><path d="M528 34 q8 -6 16 0 q-4 10 -14 6z" fill="#5fe39a"/>`;   // Earth
+  s += `<path d="M0 150 Q 150 120 300 145 T 600 140 L600 220 L0 220Z" fill="#5a5d70"/><ellipse cx="160" cy="185" rx="110" ry="22" fill="#2b2e3f"/>`;
+  const noBase = g.bases && !g.bases.length;
+  s += `<text x="160" y="190" text-anchor="middle" font-size="13" fill="#8fd3ff">${noBase ? "🗺️ no parcel yet" : "🧊 ice in the shadow"}</text>`;
+  const row = (n, emoji, x0, y, gap) => { let r = ""; for (let i = 0; i < Math.min(n, 12); i++) r += `<text x="${x0 + i * gap}" y="${y}" font-size="22">${emoji}</text>`; return r + (n > 12 ? `<text x="${x0 + 12 * gap}" y="${y}" font-size="14" fill="#fff">+${n - 12}</text>` : ""); };
+  s += row(Math.round(m.power / 10), "☀️", 300, 132, 24) + row(Math.round(m.rig / 10), "⛏️", 70, 165, 26) + row(Math.round(m.plant / 10), "🔥", 330, 175, 26);
+  if (m.fuel) s += row(m.fuel, "🧪", 330, 205, 26);
+  if (g.rocket && g.rocket.here) s += `<text x="490" y="205" font-size="46">🚀</text><text x="470" y="130" font-size="14" fill="#ffcc4d">The rocket is here!</text>`;
+  else s += `<text x="520" y="200" font-size="34">🛬</text>`;
+  if (g.rigs_down_until) s += `<text x="70" y="140" font-size="14" fill="#ff7a7a">🔧 repairing until turn ${g.rigs_down_until}</text>`;
+  return s + `<text x="10" y="212" font-size="12" fill="#a8b0d6">${esc(g.place)}</text></svg>`;
+}
+
+// ---------- the map (missions 6-9): parcels as 5 km squares, north up
+function renderMap(g) {
+  const card = $("mapcard");
+  if (!g.map || g.map.length < 2) { card.classList.add("hidden"); return; }   // one parcel: nothing to choose
+  card.classList.remove("hidden");
+  const sz = g.map[0].size, xs = g.map.map(p => p.x), ys = g.map.map(p => p.y);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs) + sz, y0 = Math.min(...ys), y1 = Math.max(...ys) + sz, pad = .6;
+  const W = x1 - x0 + 2 * pad, H = y1 - y0 + 2 * pad;
+  let s = `<svg class="mapsvg" viewBox="0 0 ${W} ${H}" style="max-height:${Math.round(120 * H / sz)}px"><rect width="${W}" height="${H}" rx=".8" fill="#14182c"/>`;
+  for (const p of g.map) {
+    const x = p.x - x0 + pad, y = y1 - (p.y + sz) + pad;
+    const col = p.owner === "you" ? "#ffcc4d" : p.owner ? "#ff7a7a" : p.auction ? "#b07cff" : "#3b5bfd";
+    const ink = p.owner === "you" ? "#1b2140" : "#fff";
+    const pct = p.owner === "you" ? `${p.grade_pct}%` : p.scan_pct != null ? `${p.scan_pct}%` : `~${p.est_pct}%`;
+    const tag = p.owner === "you" ? "your base" : p.owner ? p.owner : p.auction ? `auction${p.my_bid ? " · your bid" : ""}` : p.scan_pct != null ? "scanned" : "map guess";
+    s += `<g class="parcel ${SEL === p.name ? "sel" : ""}" data-p="${esc(p.name)}" role="button" aria-label="parcel ${esc(p.name)}">
+      <rect x="${x + .12}" y="${y + .12}" width="${sz - .24}" height="${sz - .24}" rx=".5" fill="${col}" opacity="${p.owner && p.owner !== "you" ? .75 : 1}"/>
+      <text x="${x + sz / 2}" y="${y + 1.2}" text-anchor="middle" font-size=".72" font-weight="700" fill="${ink}">${esc(short(p.name))}</text>
+      <text x="${x + sz / 2}" y="${y + 2.85}" text-anchor="middle" font-size="1.3" font-weight="800" fill="${ink}">${pct}</text>
+      <text x="${x + sz / 2}" y="${y + 3.55}" text-anchor="middle" font-size=".5" fill="${ink}">ice</text>
+      <text x="${x + sz / 2}" y="${y + 4.35}" text-anchor="middle" font-size=".58" fill="${ink}">${esc(tag)}</text>
+      ${PLAN.scan.includes(p.name) ? `<text x="${x + sz - 1}" y="${y + 1.2}" font-size=".7">🔍</text>` : ""}
+      ${PLAN.bid[p.name] ? `<text x="${x + .3}" y="${y + 1.2}" font-size=".7">🏷️</text>` : ""}</g>`;
+  }
+  $("map").innerHTML = s + "</svg>";
+  $("map-note").textContent = g.scan_cost ? "Tap a parcel to scan it or bid" : "Tap a parcel to see it";
+  document.querySelectorAll(".parcel").forEach(el => el.onclick = () => { SEL = el.dataset.p; renderMap(G); });
+  renderPick(g);
+}
+function renderPick(g) {
+  const p = g.map.find(x => x.name === SEL);
+  if (!p) {
+    const mine = g.bases.length ? `Your base${g.bases.length > 1 ? "s" : ""}: ${g.bases.map(b => `<b>${esc(short(b.name))}</b> (${b.grade_pct}% ice, ${b.ice_left.toLocaleString()} loads left)`).join(" · ")}`
+      : "You have no parcel yet. Pick one on the map.";
+    $("pick").innerHTML = mine; return;
+  }
+  const lines = [`<b>${esc(p.name)}</b> <span class="note">${esc(p.where)} · ${p.shadow_pct}% in shadow</span>`];
+  if (p.owner === "you") lines.push(`⭐ Your base: <b>${p.grade_pct}% ice</b>, ${p.ice_left.toLocaleString()} loads of ice left.`);
+  else if (p.owner) lines.push(`This is ${esc(p.owner)}'s base.`);
+  else {
+    lines.push(`🗺️ Map guess: about ${p.est_pct}% ice, about ${p.est_ice.toLocaleString()} loads. <span class="note">The map is only a guess!</span>`);
+    if (p.scan_pct != null) lines.push(`🔍 Your scan: <b>${p.scan_pct}% ice</b>, about ${p.scan_ice.toLocaleString()} loads.`);
+    else if (g.scan_cost) {
+      const on = PLAN.scan.includes(p.name);
+      lines.push(`<button class="toggle ${on ? "on" : ""}" id="b-scan">${on ? "✔ Scan this turn" : `🔍 Scan for ${g.scan_cost} 🪙`}</button> <span class="note">the result comes next turn</span>`);
+    }
+    if (p.my_bid) lines.push(`🏷️ Your secret bid: <b>${p.my_bid} 🪙</b>. You'll know on turn ${p.result_turn}.`);
+    else {
+      if (p.auction) lines.push(`🟣 Someone has bid on it. The auction ends and you'll know on turn ${p.result_turn}. You can still bid!`);
+      const v = PLAN.bid[p.name] || 0;
+      lines.push(`<span class="row"><span>🏷️ <b>Bid</b></span><span class="step"><button data-bid="-10" aria-label="bid less">−</button><b>${v}</b><button data-bid="10" aria-label="bid more">+</button></span><span class="note">credits · secret · highest wins · you get it back if you lose</span></span>`);
+    }
+  }
+  $("pick").innerHTML = lines.map(x => `<div style="margin:4px 0">${x}</div>`).join("");
+  if ($("b-scan")) $("b-scan").onclick = () => { PLAN.scan = PLAN.scan.includes(p.name) ? PLAN.scan.filter(x => x !== p.name) : [...PLAN.scan, p.name]; preview(); };
+  document.querySelectorAll("[data-bid]").forEach(b => b.onclick = () => {
+    const v = Math.max(0, (PLAN.bid[p.name] || 0) + +b.dataset.bid);
+    PLAN.bid = v ? {[p.name]: v} : {};   // one bid at a time
+    preview();
+  });
+}
+function renderMarket(g) {
+  const c = $("mktcard");
+  if (!g.market) { c.classList.add("hidden"); return; }
+  c.classList.remove("hidden");
+  const w = g.market.WATER, last = w.last;
+  const me = g.log.length ? g.log[g.log.length - 1].sold.WATER : 0;
+  let s = `<h3 style="margin:0 0 6px">📈 Water market</h3>`;
+  if (!last || !last.sold) s += `<div class="note">The lander pays ${w.top} for water when little is sold. The more everyone sells in one turn, the lower the price (down to ${w.bottom}). Everyone gets the same price.</div>`;
+  else {
+    s += `<div>Last turn the lander bought <b>${last.sold} 💧</b> at <b class="gold">${last.price} 🪙</b> each.</div>`;
+    s += `<div class="note">You sold ${me}${g.rivals.map(r => ` · ${esc(r.name)} sold ${r.last ? r.last.sold.WATER : 0}`).join("")}. Ice always pays ${g.prices.ICE}.</div>`;
+  }
+  c.innerHTML = s;
+}
+
+function renderPlan() {
+  const g = G, m = g.machines, P = PLAN, pv = PREV || {};
+  const acts = [];
+  const bases = g.bases || [{name: "your parcel", ice_left: null}];
+  if (g.bases && !bases.length)
+    acts.push(`<div class="act"><span style="font-size:20px">⛏️ <b>Dig</b></span> <span class="note">You have no parcel to dig yet. Win one on the map!</span></div>`);
+  else if (bases.length === 1)
+    acts.push(`<div class="act"><div class="row"><span style="font-size:20px">⛏️ <b>Dig</b></span>
+      <span class="step"><button data-a="dig" data-d="-10">−</button><b>${P.dig}</b><button data-a="dig" data-d="10">+</button></span></div>
+      <div class="note">loads of frozen soil (your drills can dig ${m.rig}${bases[0].ice_left != null ? ` · ${bases[0].ice_left.toLocaleString()} loads of ice left` : ""})${g.risk.jams ? ` · jam chance <b class="${pv.jam_bps > 1000 ? "bad" : pv.jam_bps > 400 ? "gold" : "good"}">${Math.round((pv.jam_bps || 0) / 100)}%</b>` : ""}</div></div>`);
+  else
+    acts.push(`<div class="act"><div style="font-size:20px">⛏️ <b>Dig</b> <span class="note">your drills can dig ${m.rig} in all</span></div>${bases.map(b => `
+      <div class="row" style="justify-content:space-between;margin-top:6px"><span>at <b>${esc(short(b.name))}</b> <span class="note">${b.grade_pct}% ice · ${b.ice_left.toLocaleString()} left${b.ice_left ? "" : " (empty)"}</span></span>
+      <span class="step"><button data-dig="${esc(b.name)}" data-d="-10">−</button><b>${(P.dig || {})[b.name] || 0}</b><button data-dig="${esc(b.name)}" data-d="10">+</button></span></div>`).join("")}</div>`);
+  if ("WATER" in g.prices && m.plant > 0)
+    acts.push(`<div class="act"><div class="row"><span style="font-size:20px">🔥 <b>Melt</b></span>
+      <span class="step"><button data-a="melt" data-d="-5">−</button><b>${P.melt}</b><button data-a="melt" data-d="5">+</button></span></div>
+      <div class="note">ice into water (melters can do ${m.plant}; 2 ⚡ each)</div></div>`);
+  if (m.fuel !== undefined)
+    acts.push(`<div class="act"><div class="row"><span style="font-size:20px">🧪 <b>Make fuel</b></span>
+      <span class="step"><button data-a="fuel" data-d="-1">−</button><b>${P.fuel}</b><button data-a="fuel" data-d="1">+</button></span></div>
+      <div class="note">jobs: each turns 10 💧 into 10 🔵 + 10 🟢, ready in 2 turns, using 10 ⚡ a turn · fuel makers: ${m.fuel}${g.fuel_busy ? `, ${g.fuel_busy} busy` : ""}</div></div>`);
+  const priceTag = k => {
+    if (g.rocket && g.rocket.buys[k]) return `${g.rocket.buys[k].price} 🪙 · rocket`;
+    if (g.market && g.market[k]) { const l = g.market[k].last; return l && l.sold ? `last ${l.price} 🪙` : `up to ${g.market[k].top} 🪙`; }
+    return `${g.prices[k]} 🪙 each`;
+  };
+  const sells = Object.keys(g.prices).map(k => `<button class="toggle ${P.sell.includes(k) ? "on" : ""}" data-sell="${k}">${P.sell.includes(k) ? "✔ " : ""}Sell ${GOODS[k]} · ${priceTag(k)}</button>`).join(" ");
+  let sellNote = "the lander buys everything you have in the store";
+  if (g.market) sellNote = "the price falls when lots of water is sold in one turn";
+  if (g.rocket) sellNote = g.rocket.here ? `🚀 The rocket is here! It buys up to ${g.rocket.buys.LH2.qty} 🔵 and ${g.rocket.buys.LOX.qty} 🟢.` : `🚀 The rocket lands every ${g.rocket.every} turns: next on turn ${g.rocket.next}. Water goes to the lander any time.`;
+  acts.push(`<div class="act"><div class="row"><span style="font-size:20px">🛬 <b>Sell</b></span><span>${sells}</span></div>
+      <div class="note">${sellNote}</div></div>`);
+  if (g.shop.length)
+    acts.push(`<div class="act"><div style="font-size:20px;margin-bottom:8px">🛒 <b>Shop</b> <span class="note">new machines start working next turn</span></div><div class="shop">${g.shop.map(x => {
+      const n = (P.buy || {})[x.id] || 0, icon = {power: "☀️", rig: "⛏️", plant: "🔥", fuel: "🧪"}[x.id];
+      return `<div class="item ${n ? "has" : ""}"><div style="font-size:28px">${icon}</div><b>${esc(x.name)}</b><div class="note">${esc(x.gives)}</div><div>${x.cost} 🪙 each</div>
+        <span class="step"><button data-buy="${x.id}" data-d="-1" aria-label="buy one fewer ${esc(x.name)}">−</button><b>${n}</b><button data-buy="${x.id}" data-d="1" aria-label="buy one more ${esc(x.name)}">+</button></span></div>`; }).join("")}</div></div>`);
+  $("acts").innerHTML = acts.join("");
+  const used = pv.power_used ?? 0;
+  $("p-power").textContent = `${used} of ${m.power}${pv.power_busy ? ` (${pv.power_busy} for fuel already cooking)` : ""}`;
+  $("p-bar").style.width = Math.min(100, 100 * used / Math.max(1, m.power)) + "%";
+  $("problems").innerHTML = (pv.problems || []).concat(pv.warnings || []).map(x => "⚠️ " + esc(x)).join("<br>");
+  const exp = [];
+  if (pv.ice_next) exp.push(`+${pv.ice_next} 🧊`);
+  if (pv.water_next) exp.push(`+${pv.water_next} 💧`);
+  if (pv.fuel_next) exp.push(`+${pv.fuel_next} 🔵 +${pv.fuel_next} 🟢 in 2 turns`);
+  if (pv.earn) exp.push(`about +${pv.earn} 🪙`);
+  if (pv.cost) exp.push(`−${pv.cost} 🪙 to spend`);
+  $("expect").innerHTML = exp.length ? `This turn you'll get: <b>${exp.join(" · ")}</b>` : "";
+  document.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { const k = b.dataset.a; P[k] = Math.max(0, (P[k] || 0) + +b.dataset.d); preview(); });
+  document.querySelectorAll("[data-dig]").forEach(b => b.onclick = () => {
+    const k = b.dataset.dig, d = typeof P.dig === "object" ? {...P.dig} : {};
+    d[k] = Math.max(0, (d[k] || 0) + +b.dataset.d); P.dig = d; preview();
+  });
+  document.querySelectorAll("[data-sell]").forEach(b => b.onclick = () => { const k = b.dataset.sell; P.sell = P.sell.includes(k) ? P.sell.filter(x => x !== k) : [...P.sell, k]; preview(); });
+  document.querySelectorAll("[data-buy]").forEach(b => b.onclick = () => { const k = b.dataset.buy; P.buy[k] = Math.max(0, (P.buy[k] || 0) + +b.dataset.d); P.last = k; preview(); });
+}
+function syncDig() {   // one number for one base; per-base numbers once there are two or more
+  const n = G.bases ? G.bases.length : 1;
+  if (n > 1 && typeof PLAN.dig !== "object") PLAN.dig = PLAN.dig ? {[G.bases.find(b => b.ice_left > 0)?.name || G.bases[0].name]: PLAN.dig} : {};
+  if (n <= 1 && typeof PLAN.dig === "object") PLAN.dig = Object.values(PLAN.dig).reduce((a, b) => a + b, 0);
+}
+async function preview() {
+  try {
+    syncDig();
+    PREV = await api("/api/preview", {token: TOKEN, plan: PLAN});
+    PLAN.dig = typeof PLAN.dig === "object" ? {...PREV.dig_at} : PREV.dig;
+    PLAN.melt = PREV.melt; PLAN.fuel = PREV.fuel; PLAN.buy = {...PREV.buy}; PLAN.scan = PREV.scan.slice(); PLAN.bid = {...PREV.bid};
+    renderPlan(); if (G.map) renderMap(G);
+  } catch (e) { oops(e.message); }
+}
+async function endTurn() {
+  if (busy) return; busy = true; $("b-end").disabled = true;
+  try {
+    G = await api("/api/turn", {token: TOKEN, plan: PLAN});
+    PLAN = nextPlan(PLAN); renderGame(); await preview(); $("hint").classList.add("hidden");
+    if (G.done || G.failed) finish();
+  } catch (e) { oops(e.message); }
+  busy = false; $("b-end").disabled = false;
+}
+function finish() {
+  const g = G, c = $("over-card");
+  if (g.done) {
+    if ((PROG[g.level] || 0) < g.stars) { PROG[g.level] = g.stars; save(PROG); }
+    $("total").textContent = `⭐ ${Object.values(PROG).reduce((a, b) => a + b, 0)} / ${LEVELS.length * 3}`;
+    const next = LEVELS.find(L => L.n === g.level + 1);
+    c.innerHTML = `<h2>Mission complete! 🎉</h2><div class="stars">${starStr(g.stars)}</div>
+      <p>${esc(g.goal.text)} in ${g.turn} turn${g.turn === 1 ? "" : "s"}.${g.stars < 3 ? `<br><span class="dim">${g.star_rule === "no_jams" && g.jams ? "No jams for three stars!" : `Finish by turn ${g.stars_at[0]} for three stars.`}</span>` : ""}</p>
+      <p class="dim">You learned: ${esc(g.learn)}</p>
+      <div class="row" style="justify-content:center;margin-top:14px"><button class="btn ghost" id="o-home">Missions</button><button class="btn ghost" id="o-again">Play again</button>${next ? `<button class="btn big" id="o-next">Next mission ▶</button>` : `<span class="gold" style="align-self:center">All ${LEVELS.length} missions done! ⭐</span>`}</div>`;
+  } else {
+    const head = {broke: "Out of credits 🔧", no_parcel: "No parcel left 🗺️"}[g.reason] || "Out of turns 🛰️";
+    const why = {broke: "Your base could not pay to look after its machines, so the drills stopped and there was nothing left to sell.",
+                 no_parcel: "Every parcel on the map now belongs to someone else, so there is nowhere left to dig."}[g.reason]
+      || `${esc(g.goal.text)}: you got ${g.goal.now.toLocaleString()} of ${g.goal.target.toLocaleString()}.`;
+    c.innerHTML = `<h2>${head}</h2><p>${why}</p>
+      <p class="dim">${esc(g.hint)}</p>
+      <div class="row" style="justify-content:center;margin-top:14px"><button class="btn ghost" id="o-home">Missions</button><button class="btn big" id="o-again">Try again ▶</button></div>`;
+  }
+  $("over").classList.remove("hidden");
+  if ($("o-again")) $("o-again").onclick = () => start(g.level);
+  if ($("o-next")) $("o-next").onclick = () => start(g.level + 1);
+  if ($("o-home")) $("o-home").onclick = home;
+}
+function home() { $("over").classList.add("hidden"); $("play").classList.add("hidden"); $("home").classList.remove("hidden"); renderHome(); }
+$("b-end").onclick = endTurn;
+$("b-home").onclick = home;
+$("b-hint").onclick = () => { const h = $("hint"); h.textContent = "💡 " + G.hint; h.classList.toggle("hidden"); };
+(async () => {
+  try { LEVELS = (await api("/api/levels")).levels; renderHome(); } catch (e) { oops(e.message); }
+})();
+</script>
+</body>
+</html>

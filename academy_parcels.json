@@ -1,0 +1,118 @@
+{
+ "table": "academy_parcels.bin",
+ "table_sha256": "1424e90bc450329daa2f851c4a6a79f4568db275356a40788ca9a04035d3c233",
+ "source": {
+  "table": "moon_parcels_v1.bin.gz",
+  "sha256": "c7dc578ed0e0b042934f4b45c33b147abb54f36a3c086871e55ae998595e9bc7"
+ },
+ "parcels": [
+  {
+   "name": "SP-ML-02",
+   "id": 90434,
+   "x": 275.0,
+   "y": 260.0,
+   "size": 5.0,
+   "psr_pct": 47,
+   "where": "in Shackleton (21 km)",
+   "area": 24999,
+   "psr": 4700,
+   "ice": 547
+  },
+  {
+   "name": "SP-ML-03",
+   "id": 90435,
+   "x": 275.0,
+   "y": 265.0,
+   "size": 5.0,
+   "psr_pct": 99,
+   "where": "in Shackleton (21 km)",
+   "area": 25000,
+   "psr": 9900,
+   "ice": 547
+  },
+  {
+   "name": "SP-ML-04",
+   "id": 90436,
+   "x": 275.0,
+   "y": 270.0,
+   "size": 5.0,
+   "psr_pct": 82,
+   "where": "in Shackleton (21 km)",
+   "area": 25000,
+   "psr": 8200,
+   "ice": 548
+  },
+  {
+   "name": "SP-ML-12",
+   "id": 90439,
+   "x": 280.0,
+   "y": 260.0,
+   "size": 5.0,
+   "psr_pct": 98,
+   "where": "in Shackleton (21 km)",
+   "area": 24999,
+   "psr": 9800,
+   "ice": 551
+  },
+  {
+   "name": "SP-ML-13",
+   "id": 90440,
+   "x": 280.0,
+   "y": 265.0,
+   "size": 5.0,
+   "psr_pct": 100,
+   "where": "in Shackleton (21 km)",
+   "area": 25000,
+   "psr": 10000,
+   "ice": 549
+  },
+  {
+   "name": "SP-ML-14",
+   "id": 90441,
+   "x": 280.0,
+   "y": 270.0,
+   "size": 5.0,
+   "psr_pct": 100,
+   "where": "in Shackleton (21 km)",
+   "area": 25000,
+   "psr": 10000,
+   "ice": 548
+  },
+  {
+   "name": "SP-ML-22",
+   "id": 90444,
+   "x": 285.0,
+   "y": 260.0,
+   "size": 5.0,
+   "psr_pct": 82,
+   "where": "in Shackleton (21 km)",
+   "area": 24999,
+   "psr": 8200,
+   "ice": 558
+  },
+  {
+   "name": "SP-ML-23",
+   "id": 90445,
+   "x": 285.0,
+   "y": 265.0,
+   "size": 5.0,
+   "psr_pct": 100,
+   "where": "in Shackleton (21 km)",
+   "area": 24999,
+   "psr": 10000,
+   "ice": 553
+  },
+  {
+   "name": "SP-ML-24",
+   "id": 90446,
+   "x": 285.0,
+   "y": 270.0,
+   "size": 5.0,
+   "psr_pct": 97,
+   "where": "in Shackleton (21 km)",
+   "area": 24999,
+   "psr": 9700,
+   "ice": 548
+  }
+ ]
+}
